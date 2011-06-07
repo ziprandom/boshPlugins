@@ -128,7 +128,7 @@ roster = config.extensions.boshPlugin.roster = {
     		var menu = document.createElement("span");
        		$(menu).attr("id","menu");
        		$(menu).attr("style","background-color:#E8E8E8;z-index:2;margin:3px;position:absolute;width:0px;display:none;");
-    		$(menu).append("<a onclick='config.extensions.boshPlugin.chat.createConversation(\"" + id + "\");'>start chat</a><br><a onclick='config.extensions.boshPlugin.pubsub.displayNode(\"" + id + "//home\");'>show dashboard</a>");
+    		$(menu).append("<a onclick='config.extensions.boshPlugin.chat.createConversation(\"" + id + "\");jQuery(this).parent().hide();'>start chat</a><br><a onclick='config.extensions.boshPlugin.pubsub.displayNode(\"" + id + "//home\");jQuery(this).parent().hide();'>show dashboard</a>");
     		$(menu).bind('mouseout',function(e){
     				if (!e) var e = window.event;
 					var tg = (window.event) ? e.srcElement : e.target;
