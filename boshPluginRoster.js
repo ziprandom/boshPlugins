@@ -108,15 +108,49 @@ roster = config.extensions.boshPlugin.roster = {
 	addContactToRosterline: function(id){
 		if (config.extensions.boshPlugin.roster.contacts[id].photo) {
 			var photo = config.extensions.boshPlugin.roster.contacts[id].photo;
-    		roster = "<img id='" + config.extensions.boshPlugin.roster.contacts[id].divid + "' "
+    		roster = document.createElement("span");
+    		//$(roster).attr("style", "width:40px;");
+    		$(roster).addClass("rosterItem");
+    		var img = document.createElement("img");
+    		$(roster).attr("id",config.extensions.boshPlugin.roster.contacts[id].divid);
+    		img.addEventListener('click',function(event){
+    				jQuery(this).next().css("top",event.layerY-10);
+    				jQuery(this).next().css("left",event.layerX-10);
+    				jQuery(this).next().css("width","100px"); 
+    				jQuery(this).next().toggle();
+    				},true);
+    		//$(img).addClass("rosterItem");
+    		$(img).attr("width",40);
+    		$(img).attr("height",40);
+    		$(img).attr("title",config.extensions.boshPlugin.roster.contacts[id].jid);
+    		$(img).attr("src",photo);
+    		$(roster).append(img);
+    		var menu = document.createElement("span");
+       		$(menu).attr("id","menu");
+       		$(menu).attr("style","background-color:#E8E8E8;z-index:2;margin:3px;position:absolute;width:0px;display:none;");
+    		$(menu).append("<a onclick='config.extensions.boshPlugin.chat.createConversation(\"" + id + "\");'>start chat</a><br><a onclick='config.extensions.boshPlugin.pubsub.displayNode(\"" + id + "//home\");'>show dashboard</a>");
+    		$(menu).bind('mouseout',function(e){
+    				if (!e) var e = window.event;
+					var tg = (window.event) ? e.srcElement : e.target;
+					if (tg.id != 'menu') return;
+					var reltg = (e.relatedTarget) ? e.relatedTarget : e.toElement;
+					while (reltg != tg && reltg.nodeName != 'BODY')
+						reltg= reltg.parentNode
+					if (reltg== tg) return;
+					jQuery(this).css("left","0px");
+    				jQuery(this).hide();	
+    			},false);
+    		$(roster).append(menu);
+    /*		roster = "<span style='position:relative;'><img id='" + config.extensions.boshPlugin.roster.contacts[id].divid + "' "
 			 // + "onclick='config.extensions.boshPlugin.chat.createConversation(\"" + id + "\");'"    // Icon onClick -> open chat
-				+ "onclick='config.extensions.boshPlugin.pubsub.displayNode(\"" + id + "//home\");'"   // Icon onClick -> open users /home pubsubnode 			
+			//	+ "onclick='config.extensions.boshPlugin.pubsub.displayNode(\"" + id + "//home\");'"   // Icon onClick -> open users /home pubsubnode 			
+				+ "onclick='jQuery(this).next().css(\"top\",event.layerY-10);jQuery(this).next().css(\"left\",event.layerX-10); jQuery(this).next().toggle();'"
 				+ "class='rosterItem' width='"
 				+ 40 + "' height='"
 				+ 40 + "' title='"
 				+ config.extensions.boshPlugin.roster.contacts[id].jid + "' src='" 
-				+ photo + "'>";
-	 			//rosterLine = rosterLine + roster;
+				+ photo + "'><div onmouseout='jQuery(this).hide();' style='border:solid;background-color:grey;z-index:2;margin:3px;position:absolute;display:none;'><a onclick='config.extensions.boshPlugin.chat.createConversation(\"" + id + "\");'>chat</a><br><a onclick='config.extensions.boshPlugin.pubsub.displayNode(\"" + id + "//home\");'>show dashboard</a></div></span>";
+	 			//rosterLine = rosterLine + roster; */
 				$('#'+config.extensions.boshPlugin.roster.contacts[id].divid).remove();  ///remove previous existing Entry
 				$(roster).hide();
 				$('#rosterline').append(roster);
@@ -125,6 +159,7 @@ roster = config.extensions.boshPlugin.roster = {
 		else config.extensions.boshPlugin.roster.requestVCard(id);
 	},
 	// remove someone from roesterline
+	
 	removeContactFromRosterline: function(id) {
 		$('#'+config.extensions.boshPlugin.roster.contacts[id].divid).fadeOut('slow');
 		$('#'+config.extensions.boshPlugin.roster.contacts[id].divid).remove();
@@ -187,7 +222,7 @@ config.macros.bosh_rosterLine = {                                              /
                 config.macros.bosh_rosterLine.width = getParam(prms, "width");
 				var roster = "";
 				//var rosterLine = "";
-				wikify("<html><div id='rosterline'>"+roster+"</div></html>",place);
+				wikify("<html><div style='margin-bottom:20px;text-align:left;' id='rosterline'>"+roster+"</div></html>",place);
 				config.extensions.boshPlugin.roster.refreshRosterLine();
 				
 		},
