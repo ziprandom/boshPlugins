@@ -105,8 +105,8 @@ chatTabsShow: function(from) {
 		$("#chatAreaTabs > div").hide();          
 		clearInterval(config.extensions.boshPlugin.chat.conversations[from].alerter);
 		$("#outer"+config.extensions.boshPlugin.chat.conversations[from].id).show();
-		$("#outer"+config.extensions.boshPlugin.chat.conversations[from].id).find("#text").focus();
 	}
+	$("#outer"+config.extensions.boshPlugin.chat.conversations[from].id).find("#text").focus();
 },
 // send a Message
 sendMessage: function(to, body) {
