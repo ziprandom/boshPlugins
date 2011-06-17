@@ -105,13 +105,14 @@ chatTabsShow: function(from) {
 		$("#chatAreaTabs > div").hide();          
 		clearInterval(config.extensions.boshPlugin.chat.conversations[from].alerter);
 		$("#outer"+config.extensions.boshPlugin.chat.conversations[from].id).show();
+		$("#outer"+config.extensions.boshPlugin.chat.conversations[from].id).find("#text").focus();
 	}
 },
 // send a Message
 sendMessage: function(to, body) {
 	if (!to) {displayMessage("Error: no Recipient for Message");}
 	else {
-		var iq = new Strophe.Builder('message', {to: to,from: boshPlugin.jid})
+		var iq = new Strophe.Builder('message', {to: to,from: boshPlugin.jid, type: 'chat'})
            		.c('body').t(body);
         	config.extensions.boshPlugin.connection.send(iq.tree());
 		var bare_to = Strophe.getBareJidFromJid(to);
@@ -162,7 +163,7 @@ config.macros.bosh_chat = {
 		form = form + "</textarea></div><br>";
                 if (!to) {to = ""; form = form + "<label for='jid'>JID:</label><input name ='jid' type='text' id='jid' value='"+to+"'/>";}
                 else {form = form + "<input type='hidden' name='jid' id='jid' value='"+to+"'/>";}
-                form = form + "<div height='8px'><input style='width:100%;' rows='1' name='text' width='80%' type='area' id='text' onkeypress='if (event.keyCode == 13){config.extensions.boshPlugin.chat.sendMessage(this.form.jid.value,this.form.text.value);this.form.text.value=null;return false;}' /></div><input type='button' id='send' value='send' onclick='config.extensions.boshPlugin.chat.sendMessage(this.form.jid.value,this.form.text.value);this.form.text.innerHTML=\"\";' /><input type='button' id='close' value='close' onclick='config.extensions.boshPlugin.chat.sendGone(this.form.jid.value);config.extensions.boshPlugin.chat.deleteConversation(this.form.jid.value)' /></form></html>";
+                form = form + "<div height='8px'><input style='width:100%;' rows='1' name='text' width='80%' type='area' id='text' onkeypress='if (event.keyCode == 13){config.extensions.boshPlugin.chat.sendMessage(this.form.jid.value,this.form.text.value);this.form.text.value=null;return false;}' /></div><input type='button' id='send' value='send' onclick='config.extensions.boshPlugin.chat.sendMessage(this.form.jid.value,this.form.text.value);this.form.text.value=null;' /><input type='button' id='close' value='close' onclick='config.extensions.boshPlugin.chat.sendGone(this.form.jid.value);config.extensions.boshPlugin.chat.deleteConversation(this.form.jid.value)' /></form></html>";
                 var source = "";
 		if (config.extensions.boshPlugin.roster.contacts[to].photo) {
 			source = "<html><img style='font-size:large;float: left;top:50%;left:10%;' width='40px' height='40px' src='"+config.extensions.boshPlugin.roster.contacts[to].photo+"'/>";

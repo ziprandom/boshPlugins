@@ -1,7 +1,8 @@
 (function($) {
 //standard bosh server & base64 encoded icon for buddies, that don´t ship one viea VCard
 config.options.txtXmppBoshServerUrl = 'http://127.0.0.1:5280/xmpp-bind';
-
+config.options.txtBoshUserName = '';
+config.options.pasBoshUserPWD = '';
 var boshPlugin;
 boshPlugin = config.extensions.boshPlugin = {               //basic functions for connecting 
 	connection: null,
@@ -59,22 +60,21 @@ config.extensions.boshPlugin.connection.disconnect();
 },
 
 connect: function(form) {
-    //config.extensions.boshPlugin.connection = new Strophe.Connection("https://bosh.jabber.systemli.org/");
-	config.extensions.boshPlugin.rawLog = "";
+    config.extensions.boshPlugin.rawLog = "";
     config.extensions.boshPlugin.connection = new Strophe.Connection(config.options.txtXmppBoshServerUrl);
     config.extensions.boshPlugin.connection.rawInput = config.extensions.boshPlugin.rawInput;
     config.extensions.boshPlugin.connection.rawOutput = config.extensions.boshPlugin.rawOutput;
     config.extensions.boshPlugin.connection.xmlInput =  config.extensions.boshPlugin.xmlInput;
     config.extensions.boshPlugin.connection.xmlOutput = config.extensions.boshPlugin.xmlOutput;
-    config.extensions.boshPlugin.jid = form.jid.value;
+    config.extensions.boshPlugin.jid = form.jid;
     if (!store.getTiddler) 
       {
          store.getTiddler=function(title) {return this.tiddlers[title];};
       }
   //  config.extensions.boshPlugin.tiddler = window.story.findContainingTiddler(form).id.substr(7);
-    config.options.txtUserName = form.jid.value;
-    config.extensions.boshPlugin.connection.connect(form.jid.value+"/web",
-	       form.pwd.value,
+    config.options.txtUserName = form.jid;
+    config.extensions.boshPlugin.connection.connect(form.jid+"/web",
+	       form.pwd,
 			       config.extensions.boshPlugin.onConnect);
 
 },
@@ -101,8 +101,9 @@ onForm: function(iq) {
 // login form
 config.macros.bosh = {
 	handler: function (place, macroName, params, wikifier, paramString, tiddler) {
-		form = "<html><form><label for='jid'>JID:</label><input name ='jid' type='text' id='jid' value=''/><label for='pass'>Password:</label><input name='pwd' type='password' id='pass'/><input type='button' id='connect' value='connect' onclick='config.extensions.boshPlugin.connect(this.form)' /><input type='button' id='disconnect' value='disconnect' onclick='config.extensions.boshPlugin.disconnect()' /></form></html>";
-		wikify(form,place);
+		//form = "<html><form><label for='jid'>JID:</label><input name ='jid' type='text' id='jid' value=''/><label for='pass'>Password:</label><input name='pwd' type='password' id='pass'/><input type='button' id='connect' value='connect' onclick='config.extensions.boshPlugin.connect(this.form)' /><input type='button' id='disconnect' value='disconnect' onclick='config.extensions.boshPlugin.disconnect()' /></form></html>";
+		//wikify(form,place);
+		wikify("JID:<<option txtBoshUserName>>PWD:<<option pasBoshUserPWD>><html><input type='button' id='connect' value='connect' onclick='config.extensions.boshPlugin.connect({jid: config.options.txtBoshUserName,pwd: config.options.pasBoshUserPWD})' /><input type='button' id='disconnect' value='disconnect' onclick='config.extensions.boshPlugin.disconnect()' /></html>",place);
 	}
 };
 })(jQuery);              

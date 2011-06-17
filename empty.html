@@ -860,6 +860,86 @@ loading a script from a source url:
 &lt;/div&gt;
 &lt;!--}}}--&gt;</pre>
 </div>
+<div title="PasswordOptionsPlugin" modifier="Tobias" created="200910290159" tags="systemConfig excludeLists clean" changecount="2" server.type="file" server.host="http://tbgtd-deutsch.tiddlyspot.com/#PasswordOptionsPlugin" server.page.revision="200910290159">
+<pre>/***
+|''Name:''|PasswordOptionPlugin|
+|''Description:''|Extends TiddlyWiki options with non encrypted password option.|
+|''Version:''|1.0.2|
+|''Date:''|Apr 19, 2007|
+|''Source:''|http://tiddlywiki.bidix.info/#PasswordOptionPlugin|
+|''Author:''|BidiX (BidiX (at) bidix (dot) info)|
+|''License:''|[[BSD open source license|http://tiddlywiki.bidix.info/#%5B%5BBSD%20open%20source%20license%5D%5D ]]|
+|''~CoreVersion:''|2.2.0 (Beta 5)|
+***/
+//{{{
+version.extensions.PasswordOptionPlugin = {
+	major: 1, minor: 0, revision: 2, 
+	date: new Date(&quot;Apr 19, 2007&quot;),
+	source: 'http://tiddlywiki.bidix.info/#PasswordOptionPlugin',
+	author: 'BidiX (BidiX (at) bidix (dot) info',
+	license: '[[BSD open source license|http://tiddlywiki.bidix.info/#%5B%5BBSD%20open%20source%20license%5D%5D]]',
+	coreVersion: '2.2.0 (Beta 5)'
+};
+
+config.macros.option.passwordCheckboxLabel = &quot;Save this password on this computer&quot;;
+config.macros.option.passwordInputType = &quot;password&quot;; // password | text
+setStylesheet(&quot;.pasOptionInput {width: 11em;}\n&quot;,&quot;passwordInputTypeStyle&quot;);
+
+merge(config.macros.option.types, {
+	'pas': {
+		elementType: &quot;input&quot;,
+		valueField: &quot;value&quot;,
+		eventName: &quot;onkeyup&quot;,
+		className: &quot;pasOptionInput&quot;,
+		typeValue: config.macros.option.passwordInputType,
+		create: function(place,type,opt,className,desc) {
+			// password field
+			config.macros.option.genericCreate(place,'pas',opt,className,desc);
+			// checkbox linked with this password &quot;save this password on this computer&quot;
+			config.macros.option.genericCreate(place,'chk','chk'+opt,className,desc);			
+			// text savePasswordCheckboxLabel
+			place.appendChild(document.createTextNode(config.macros.option.passwordCheckboxLabel));
+		},
+		onChange: config.macros.option.genericOnChange
+	}
+});
+
+merge(config.optionHandlers['chk'], {
+	get: function(name) {
+		// is there an option linked with this chk ?
+		var opt = name.substr(3);
+		if (config.options[opt]) 
+			saveOptionCookie(opt);
+		return config.options[name] ? &quot;true&quot; : &quot;false&quot;;
+	}
+});
+
+merge(config.optionHandlers, {
+	'pas': {
+ 		get: function(name) {
+			if (config.options[&quot;chk&quot;+name]) {
+				return encodeCookie(config.options[name].toString());
+			} else {
+				return &quot;&quot;;
+			}
+		},
+		set: function(name,value) {config.options[name] = decodeCookie(value);}
+	}
+});
+
+// need to reload options to load passwordOptions
+loadOptionsCookie();
+
+/*
+if (!config.options['pasPassword'])
+	config.options['pasPassword'] = '';
+
+merge(config.optionsDesc,{
+		pasPassword: &quot;Test password&quot;
+	});
+*/
+//}}}</pre>
+</div>
 <div title="SideBarOptions" modifier="zip" created="201105231504" modified="201105231504" node="" changecount="2">
 <pre>&lt;&lt;search&gt;&gt;&lt;&lt;closeAll&gt;&gt;&lt;&lt;permaview&gt;&gt;&lt;&lt;newTiddler&gt;&gt;&lt;&lt;newTiddler label:'new article' template:blogEditTemplate&gt;&gt;&lt;&lt;newJournal &quot;DD MMM YYYY&quot; &quot;journal&quot;&gt;&gt;&lt;&lt;saveChanges&gt;&gt;&lt;&lt;slider chkSliderOptionsPanel OptionsPanel &quot;options »&quot; &quot;Change TiddlyWiki advanced options&quot;&gt;&gt;</pre>
 </div>
