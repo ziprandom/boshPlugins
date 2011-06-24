@@ -8,6 +8,8 @@ boshPlugin = config.extensions.boshPlugin;
 var roster;
 roster = config.extensions.boshPlugin.roster = {
 	contacts: {},   // stores roster contacts
+	vCardQue: [],
+	runningRecursiveVCardRequest: 0,
 	// get it from the server
 	queryRoster: function() {
 		config.extensions.boshPlugin.log("querying Roster...");
@@ -16,19 +18,22 @@ roster = config.extensions.boshPlugin.roster = {
 	},
     // and when you got it, populate your contacts Object
 	onRoster: function(iq) {
-      		config.extensions.boshPlugin.log("got Roster...");
-			// We add ourselves
+      	    config.extensions.boshPlugin.log("got Roster...");
+	    var all_jids = new Array();
+            // We add ourselves
+            all_jids.push(boshPlugin.jid);
             config.extensions.boshPlugin.roster.contacts[boshPlugin.jid] = {}; // Roster Contact für uns selber 
-			config.extensions.boshPlugin.roster.contacts[boshPlugin.jid].jid = boshPlugin.jid;
-			config.extensions.boshPlugin.roster.contacts[boshPlugin.jid].name = boshPlugin.jid;
-			config.extensions.boshPlugin.roster.contacts[boshPlugin.jid].presence = "online";
-			config.extensions.boshPlugin.roster.contacts[boshPlugin.jid].resources = {};
-			config.extensions.boshPlugin.roster.contacts[boshPlugin.jid].photohash = "";              
-   			config.extensions.boshPlugin.roster.contacts[boshPlugin.jid].divid = Math.floor(Math.random() * 2000);
+	    config.extensions.boshPlugin.roster.contacts[boshPlugin.jid].jid = boshPlugin.jid;
+	    config.extensions.boshPlugin.roster.contacts[boshPlugin.jid].name = boshPlugin.jid;
+	    config.extensions.boshPlugin.roster.contacts[boshPlugin.jid].presence = "online";
+	    config.extensions.boshPlugin.roster.contacts[boshPlugin.jid].resources = {};
+	    config.extensions.boshPlugin.roster.contacts[boshPlugin.jid].photohash = "";              
+   	    config.extensions.boshPlugin.roster.contacts[boshPlugin.jid].divid = Math.floor(Math.random() * 2000);
             // and the others
       		$(iq).find('item').each(function () {
                           var jid = $(this).attr('jid');
-                          var name = $(this).attr('name') || jid;
+                          all_jids.push(jid);
+			  var name = $(this).attr('name') || jid;
 						  var id = jid;
 						  config.extensions.boshPlugin.roster.contacts[id] = {};
 						  config.extensions.boshPlugin.roster.contacts[id].jid = jid;
@@ -39,8 +44,9 @@ roster = config.extensions.boshPlugin.roster = {
 						  config.extensions.boshPlugin.roster.contacts[id].divid = Math.floor(Math.random() * 2000);
 			});
       		//config.extensions.boshPlugin.roster.refreshRosterTiddler();
-      		config.extensions.boshPlugin.connection.send($pres()); //sends its presence because the getRoster function is called after login, shouldnt be here ...
-			config.extensions.boshPlugin.connection.addHandler(config.extensions.boshPlugin.roster.onPresence, null, "presence"); // ad a Handler for incomming Presence Stanzas
+      		//config.extensions.boshPlugin.roster.getRosterVCards(all_jids, function() {config.extensions.boshPlugin.connection.send($pres());});
+		config.extensions.boshPlugin.connection.send($pres()); //sends its presence because the getRoster function is called after login, shouldnt be here ...
+		config.extensions.boshPlugin.connection.addHandler(config.extensions.boshPlugin.roster.onPresence, null, "presence"); // ad a Handler for incomming Presence Stanzas
 
 	},
 	/*
@@ -54,7 +60,7 @@ roster = config.extensions.boshPlugin.roster = {
 		var id = bare_jid;  
 		var photohash = $("x > photo",presence).text();
 		if (photohash != config.extensions.boshPlugin.roster.contacts[id].photohash) {   // check, wheter the avatar has changed 
-			config.extensions.boshPlugin.roster.requestVCard(id);
+			//config.extensions.boshPlugin.roster.requestVCard(id);
 			config.extensions.boshPlugin.roster.contacts[id].photohash = photohash;
 		}
 		if (ptype !== 'error') {
@@ -108,8 +114,8 @@ roster = config.extensions.boshPlugin.roster = {
 	addContactToRosterline: function(id){
 		if (config.extensions.boshPlugin.roster.contacts[id].photo) {
 			var photo = config.extensions.boshPlugin.roster.contacts[id].photo;
-    		roster = document.createElement("span");
-    		//$(roster).attr("style", "width:40px;");
+    		roster = document.createElement("div");
+    		$(roster).attr("style", "float:left;width:"+config.macros.bosh_rosterLine.width+";");
     		$(roster).addClass("rosterItem");
     		var img = document.createElement("img");
     		$(roster).attr("id",config.extensions.boshPlugin.roster.contacts[id].divid);
@@ -120,8 +126,8 @@ roster = config.extensions.boshPlugin.roster = {
     				jQuery(this).next().toggle();
     				},true);
     		//$(img).addClass("rosterItem");
-    		$(img).attr("width",40);
-    		$(img).attr("height",40);
+    		$(img).attr("width",config.macros.bosh_rosterLine.width);
+    		$(img).attr("height",config.macros.bosh_rosterLine.width);
     		$(img).attr("title",config.extensions.boshPlugin.roster.contacts[id].jid);
     		$(img).attr("src",photo);
     		$(roster).append(img);
@@ -141,22 +147,14 @@ roster = config.extensions.boshPlugin.roster = {
     				jQuery(this).hide();	
     			},false);
     		$(roster).append(menu);
-    /*		roster = "<span style='position:relative;'><img id='" + config.extensions.boshPlugin.roster.contacts[id].divid + "' "
-			 // + "onclick='config.extensions.boshPlugin.chat.createConversation(\"" + id + "\");'"    // Icon onClick -> open chat
-			//	+ "onclick='config.extensions.boshPlugin.pubsub.displayNode(\"" + id + "//home\");'"   // Icon onClick -> open users /home pubsubnode 			
-				+ "onclick='jQuery(this).next().css(\"top\",event.layerY-10);jQuery(this).next().css(\"left\",event.layerX-10); jQuery(this).next().toggle();'"
-				+ "class='rosterItem' width='"
-				+ 40 + "' height='"
-				+ 40 + "' title='"
-				+ config.extensions.boshPlugin.roster.contacts[id].jid + "' src='" 
-				+ photo + "'><div onmouseout='jQuery(this).hide();' style='border:solid;background-color:grey;z-index:2;margin:3px;position:absolute;display:none;'><a onclick='config.extensions.boshPlugin.chat.createConversation(\"" + id + "\");'>chat</a><br><a onclick='config.extensions.boshPlugin.pubsub.displayNode(\"" + id + "//home\");'>show dashboard</a></div></span>";
-	 			//rosterLine = rosterLine + roster; */
-				$('#'+config.extensions.boshPlugin.roster.contacts[id].divid).remove();  ///remove previous existing Entry
-				$(roster).hide();
-				$('#rosterline').append(roster);
-				$('#'+config.extensions.boshPlugin.roster.contacts[id].divid).fadeIn('slow');  
+		$('#'+config.extensions.boshPlugin.roster.contacts[id].divid).remove();  ///remove previous existing Entry
+		$(roster).hide();
+		$('#rosterline').append(roster);
+		$('#'+config.extensions.boshPlugin.roster.contacts[id].divid).fadeIn('slow');  
 		}
-		else config.extensions.boshPlugin.roster.requestVCard(id);
+		else {
+			config.extensions.boshPlugin.roster.recRequestVCard(id,config.extensions.boshPlugin.refreshRosterLine);
+		}
 	},
 	// remove someone from roesterline
 	
@@ -172,6 +170,37 @@ roster = config.extensions.boshPlugin.roster = {
 				config.extensions.boshPlugin.roster.addContactToRosterline(buddy);
 			}
 		}
+	},
+	recRequestVCard: function(id,callback) {
+		config.extensions.boshPlugin.roster.vCardQue.push(id);
+		if (config.extensions.boshPlugin.roster.runningRecursiveVCardRequest == 0) {
+			config.extensions.boshPlugin.roster.getRosterVCardsFromVCardQue(callback);
+		}
+	},
+        getRosterVCardsFromVCardQue: function(callback) {
+		var limit = 5;
+		config.extensions.boshPlugin.roster.runningRecursiveVCardRequest = 1;
+		if (config.extensions.boshPlugin.roster.vCardQue.length < limit) limit = config.extensions.boshPlugin.roster.vCardQue.length;
+		for (var i = 0; i < limit;i++) {
+			var iq = $iq({type: 'get',to: config.extensions.boshPlugin.roster.vCardQue.shift()}).c('vCard', {xmlns: 'vcard-temp'});
+			if (i < limit) boshPlugin.connection.sendIQ(iq,config.extensions.boshPlugin.roster.requestVCardCallback,null);
+			else {
+				boshPlugin.connection.sendIQ(iq,function() {
+					config.extensions.boshPlugin.roster.requestVCardCallback;
+					config.extensions.boshPlugin.roster.getRosterVCardsFromVCardQue(config.extensions.boshPlugin.roster.vCardQue,callback);
+				},function() {
+					config.extensions.boshPlugin.roster.requestVCardCallback;
+					config.extensions.boshPlugin.roster.getRosterVCardsFromVCardQue(config.extensions.boshPlugin.roster.vCardQue,callback);
+				});
+			}
+		}
+		if (config.extensions.boshPlugin.roster.vCardQue.length == 0 ) {
+			config.extensions.boshPlugin.roster.runningRecursiveVCardRequest = 0;
+			if(typeof callback == 'function'){
+        			callback.call(this);
+	      		}
+		}
+			
 	},
 	// request the VCard of a contact
 	requestVCard: function(jid) {
@@ -222,7 +251,7 @@ config.macros.bosh_rosterLine = {                                              /
                 config.macros.bosh_rosterLine.width = getParam(prms, "width");
 				var roster = "";
 				//var rosterLine = "";
-				wikify("<html><div style='margin-bottom:20px;text-align:left;' id='rosterline'>"+roster+"</div></html>",place);
+				wikify("<html><span style='text-align:left;' id='rosterline'>"+roster+"</span></html>",place);
 				config.extensions.boshPlugin.roster.refreshRosterLine();
 				
 		},

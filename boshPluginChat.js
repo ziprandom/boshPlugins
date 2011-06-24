@@ -94,16 +94,15 @@ addMessageToConversation: function(conv,msg) {
 },
 // show a conversation in the chatTabs window
 chatTabsShow: function(from) {
+	clearInterval(config.extensions.boshPlugin.chat.conversations[from].alerter);
 	if ($("#outer"+config.extensions.boshPlugin.chat.conversations[from].id).css('display') == 'block') {  
    		$("#chatAreaTabs").slideToggle('slow'); ;
-		clearInterval(config.extensions.boshPlugin.chat.conversations[from].alerter);
 	}
 	else {
 		if ($("#chatAreaTabs").css('display') == 'none') {
 		      $("#chatAreaTabs").slideToggle('slow');
 		}
 		$("#chatAreaTabs > div").hide();          
-		clearInterval(config.extensions.boshPlugin.chat.conversations[from].alerter);
 		$("#outer"+config.extensions.boshPlugin.chat.conversations[from].id).show();
 	}
 	$("#outer"+config.extensions.boshPlugin.chat.conversations[from].id).find("#text").focus();
