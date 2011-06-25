@@ -120,7 +120,13 @@ pubsub = config.extensions.boshPlugin.pubsub = {
                                         else {content = "";}
                                 }
 				if (this.getElementsByTagName("author")[0]){
-                                        author = this.getElementsByTagName("author")[0].childNodes[0].nodeValue;
+                                        author = this.getElementsByTagName("author")[0];
+					if (author.getElementsByTagName("name")[0]) {
+						author = author.getElementsByTagName("name")[0].nodeValue;
+					}
+					else {
+						author = this.getElementsByTagName("author")[0].childNodes[0].nodeValue;
+					}					
                                 }
 				if (this.getElementsByTagName("summary")[0]){
                                         content = this.getElementsByTagName("summary")[0].childNodes[0].nodeValue;
@@ -212,7 +218,7 @@ pubsub = config.extensions.boshPlugin.pubsub = {
         if (!callback) {
 	    	callback = function (iq) {displayMessage("sucessfully published article");};
 		}
-		iq = iq.c('title').t(post.title).up().c('content').t(post.content).up().c('author').t(post.author).up().c('published').t(post.published).up().c('updated').t(post.updated);
+		iq = iq.c('title').t(post.title).up().c('content').t(post.content).up().c('author').c('name').t(post.author).up().c('uri').t(post.author).up().up().c('published').t(post.published).up().c('updated').t(post.updated);
 				config.extensions.boshPlugin.connection.sendIQ(iq,callback,function (iq) {displayMessage("Error while Publishing Article: "+Strophe.serialize(iq));});
 	},
 	// retract a post from a node
