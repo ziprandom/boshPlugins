@@ -83,6 +83,15 @@ pubsub = config.extensions.boshPlugin.pubsub = {
 		var iq = $iq({type: 'set', to: Strophe.getBareJidFromJid(node)}).c('pubsub',{xmlns: 'http://jabber.org/protocol/pubsub'}).c('unsubscribe',{node: Strophe.getResourceFromJid(node),jid: jid});	
 		config.extensions.boshPlugin.connection.sendIQ(iq,function (iq) {displayMessage('sucess unsubscribing to Node');},function (iq) {displayMessage("Error unsubscribing to Node: "+Strophe.serialize(iq));});
 	},
+	getSubscriptions: function(service) {
+		if (!service) {
+			service = getDomainFromJid(config.extensions.boshPlugin.jid);
+		}
+		var iq = $iq({type: 'get', to: service}).c('pubsub',{xmlns: 'http://jabber.org/protocol/pubsub'})
+				.c('subscriptions');
+		config.extensions.boshPlugin.connection.sendIQ(iq,function (iq) {displayMessage('success..')},
+					function (iq) {displayMessage('failure: '+iq)});
+	},
 	// retrieve Node items, give the result to the specified callback function ...
 	getItemsFromNode: function(node,callback) {
 		var iq = $iq({type: 'get', to: Strophe.getBareJidFromJid(node)}).c('pubsub',{xmlns: 'http://jabber.org/protocol/pubsub'}).c('items',{node: Strophe.getResourceFromJid(node)});	
@@ -107,22 +116,26 @@ pubsub = config.extensions.boshPlugin.pubsub = {
 				var published = null;
 				var updated = null;
 				
-				if (this.getElementsByTagName("title")) {
-					if (this.getElementsByTagName("title")[0].childNodes[0]) {
-						itemtitle = this.getElementsByTagName("title")[0].childNodes[0].nodeValue;
-					}                                                                             
-					else {itemtitle = 'undefined'}
+				if ($("> title",this)) {
+					itemtitle = $("> title",this).text();
 				}	
+				else {itemtitle = 'undefined'}
 				if (this.getElementsByTagName("content")[0]){
                                         if (content = this.getElementsByTagName("content")[0].childNodes[0]){
                                         	content = this.getElementsByTagName("content")[0].childNodes[0].nodeValue;
+                                        	}
+                                        else {content = "";}
+                                }if (this.getElementsByTagName("body")[0]){
+                                        if (content = this.getElementsByTagName("body")[0].childNodes[0]){
+                                        	content = this.getElementsByTagName("body")[0].childNodes[0].nodeValue;
                                         	}
                                         else {content = "";}
                                 }
 				if (this.getElementsByTagName("author")[0]){
                                         author = this.getElementsByTagName("author")[0];
 					if (author.getElementsByTagName("name")[0]) {
-						author = author.getElementsByTagName("name")[0].nodeValue;
+						//author = author.getElementsByTagName("name")[0].nodeValue;
+						author = $(author).text(); //author tag has different childs in jappix, buddycloud ... i use the whole author text
 					}
 					else {
 						author = this.getElementsByTagName("author")[0].childNodes[0].nodeValue;
@@ -209,10 +222,10 @@ pubsub = config.extensions.boshPlugin.pubsub = {
 	publishToNode: function(node,post,callback) { // post object has post.title,post.content, post.author, post.published,post.updated
 		var iq;
 		if (post.id) {
-			iq = $iq({type: 'set',to: Strophe.getBareJidFromJid(node)}).c('pubsub',{xmlns: 'http://jabber.org/protocol/pubsub'}).c('publish',{node: Strophe.getResourceFromJid(node)}).c('item',{id: post.id}).c('entry',{xmlns: 'http://www.w3.org/2005/Atom',xmlnsactivity: "http://activitystrea.ms/spec/1.0/"});	
+			iq = $iq({type: 'set',to: Strophe.getBareJidFromJid(node)}).c('pubsub',{xmlns: 'http://jabber.org/protocol/pubsub'}).c('publish',{node: Strophe.getResourceFromJid(node)}).c('item',{id: post.id, publisher: post.author}).c('entry',{xmlns: 'http://www.w3.org/2005/Atom',xmlnsactivity: "http://activitystrea.ms/spec/1.0/"});	
 		}
 	    else {
-			iq = $iq({type: 'set',to: Strophe.getBareJidFromJid(node)}).c('pubsub',{xmlns: 'http://jabber.org/protocol/pubsub'}).c('publish',{node: Strophe.getResourceFromJid(node)}).c('item').c('entry',{xmlns: 'http://www.w3.org/2005/Atom',xmlnsactivity: "http://activitystrea.ms/spec/1.0/"});
+			iq = $iq({type: 'set',to: Strophe.getBareJidFromJid(node)}).c('pubsub',{xmlns: 'http://jabber.org/protocol/pubsub'}).c('publish',{node: Strophe.getResourceFromJid(node)}).c('item',{publisher: post.author}).c('entry',{xmlns: 'http://www.w3.org/2005/Atom',xmlnsactivity: "http://activitystrea.ms/spec/1.0/"});
 		}
 		//             <entry xmlns="http://www.w3.org/2005/Atom" xmlns:activity="http://activitystrea.ms/spec/1.0/"> 
         if (!callback) {
@@ -272,6 +285,14 @@ pubsub = config.extensions.boshPlugin.pubsub = {
 			$("#affiliationsdiv").append(row);
 		});
 		
+	},
+	/*
+		Buddycloud Channel Server Interaction
+	*/
+	registerChannel: function(service) {
+		var iq = $iq({type: 'set', to: service}).c('query',{xmlns: 'jabber:iq:register'});
+		config.extensions.boshPlugin.connection.sendIQ(iq, function() {
+			displayMessage("success registering Channel @ service");},function(iq) {displayMessage("error registering channel @ service: " + Strophe.serialize(iq));});
 	},
 	// create Node
 	createNode: function(node) {
